@@ -1,5 +1,5 @@
 /*
-Redisn wraps redisp with notifications.
+Package redisn wraps redisp with notifications.
 
 NDo accepts SUBSCRIBE and PSUBSCRIBE commands with an associated list of one or more keys.
 
@@ -61,9 +61,9 @@ func New(pool redisp.Pooler) *NPool {
 
 // NPooler describes the main functionality offered by this package
 type NPooler interface {
-        // The NDo function accepts SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
+        // NDo function accepts SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
         NDo(string, Handler, ...string) error
-        // The NUnDo function accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
+        // NUnDo function accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
         NUnDo(string, ...string) error
 }
 
@@ -73,7 +73,7 @@ type NPool struct {
 	c net.Conn
 }
 
-// The NDo function accepts SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
+// NDo function accepts SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
 func (n *NPool) NDo(command string, handler Handler, keys ...string) error {
 	if strings.ToUpper(command) == "SUBSCRIBE" || strings.ToUpper(command) == "PSUBSCRIBE" {
 		n.c = n.Get()
@@ -134,7 +134,7 @@ func (n *NPool) handler(handler Handler) {
 	n.Put(n.c)
 }
 
-// The NUnDo function accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
+// NUnDo function accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
 func (n *NPool) NUnDo(command string, keys ...string) error {
 	if strings.ToUpper(command) == "UNSUBSCRIBE" || strings.ToUpper(command) == "PUNSUBSCRIBE" {
 		redisb.Out(n.c, append(append([]string{}, command), keys...)...)
