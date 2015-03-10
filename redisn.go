@@ -28,12 +28,12 @@ An example of using this package is as follows:
                 sizeOfPool := 10
                 retryDuration := 300 * time.Millisecond
                 n := redisn.New(redisp.New(sizeOfPool, creator, retryDuration))
-                h := func(k string, s string, e error) { fmt.Println("Received:", k, s, e) }
+                h := func(k string, msg string, e error) { fmt.Println("Received:", k,msg, e) }
                 err := n.NDo("SUBSCRIBE", h, "something")
                 if err != nil {
                         panic("Failed to subscribe")
                 }
-                time.Sleep(10 * time.Second)
+                time.Sleep(10 * time.Second) // Run some command like: redis-cli publish something else
                 err = n.NUnDo("UNSUBSCRIBE", "something")
                 if err != nil {
                         fmt.Println("Failed to unsubscribe")
