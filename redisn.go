@@ -100,7 +100,7 @@ func (n *NPool) NDo(command string, handler Handler, keys ...string) error {
 		go n.handler(handler)
 		return nil
 	}
-	return fmt.Errorf("the given command '%s' is not supported by NDo. Please use 'SUBSCRIBE' or 'PSUBSCRIBE'.", command)
+	return fmt.Errorf("the given command '%s' is not supported by NDo. Please use 'SUBSCRIBE' or 'PSUBSCRIBE'", command)
 }
 
 func (n *NPool) handler(handler Handler) {
@@ -140,5 +140,5 @@ func (n *NPool) NUnDo(command string, keys ...string) error {
 		redisb.Out(n.c, append(append([]string{}, command), keys...)...)
                 return nil
 	}
-	return fmt.Errorf("the given command '%s' is not supported by NUnDo. Please use 'UNSUBSCRIBE' or 'PUNSUBSCRIBE'.", command)
+	return fmt.Errorf("the given command '%s' is not supported by NUnDo. Please use 'UNSUBSCRIBE' or 'PUNSUBSCRIBE'", command)
 }
