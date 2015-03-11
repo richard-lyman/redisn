@@ -54,14 +54,14 @@ import (
 // Handler defines the function type required for handling notification messages or failures
 type Handler func(string, string, error)
 
-// New wraps a redisp.Pooler with the NDo and NUnDo functionality
-func New(pool redisp.Pooler) *NPool {
+// New wraps a redisp.Pool with the NDo and NUnDo functionality
+func New(pool redisp.Pool) *NPool {
 	return &NPool{pool, nil}
 }
 
-// NPool is the redisp.Pooler wrapper
+// NPool is the redisp.Pool wrapper
 type NPool struct {
-	redisp.Pooler
+	redisp.Pool
 	c net.Conn
 }
 
