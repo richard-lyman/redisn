@@ -59,14 +59,6 @@ func New(pool redisp.Pooler) *NPool {
 	return &NPool{pool, nil}
 }
 
-// NPooler describes the main functionality offered by this package
-type NPooler interface {
-        // NDo function accepts SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
-        NDo(string, Handler, ...string) error
-        // NUnDo function accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
-        NUnDo(string, ...string) error
-}
-
 // NPool is the redisp.Pooler wrapper
 type NPool struct {
 	redisp.Pooler
