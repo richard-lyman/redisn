@@ -55,13 +55,13 @@ import (
 type Handler func(string, string, error)
 
 // New wraps a redisp.Pool with the NDo and NUnDo functionality
-func New(pool redisp.Pool) *NPool {
+func New(pool *redisp.Pool) *NPool {
 	return &NPool{pool, nil}
 }
 
 // NPool is the redisp.Pool wrapper
 type NPool struct {
-	redisp.Pool
+	*redisp.Pool
 	c net.Conn
 }
 
