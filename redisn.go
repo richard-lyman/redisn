@@ -68,7 +68,9 @@ type NPool struct {
 // NDo function accepts SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
 func (n *NPool) NDo(command string, handler Handler, keys ...string) error {
 	if strings.ToUpper(command) == "SUBSCRIBE" || strings.ToUpper(command) == "PSUBSCRIBE" {
-		n.c = n.Get()
+		if n.c == nil {
+			n.c = n.Get()
+		}
 		verifySubscription := func(tmp interface{}, err error) error {
 			if err != nil {
 				return err
@@ -105,17 +107,17 @@ func (n *NPool) handler(handler Handler) {
 		msga := tmp.([]interface{})
 		msgType := strings.ToUpper(msga[0].(string))
 		if strings.HasPrefix(msgType, "UN") || strings.HasPrefix(msgType, "PUN") {
-                        fmt.Println("Unsubscribing")
-                        remainingSubscriptions := msga[2].(int64)
+			fmt.Println("Unsubscribing")
+			remainingSubscriptions := msga[2].(int64)
 			if err != nil {
 				handler("", "", fmt.Errorf("error converting the remaining subscriptions count from string to int: %s", err))
 			} else {
 				if remainingSubscriptions == 0 {
-                                        fmt.Println("No subscriptions remaining")
-                                        break
+					fmt.Println("No subscriptions remaining")
+					break
 				}
 			}
-                        continue
+			continue
 		}
 		if msgType != "MESSAGE" {
 			handler("", "", fmt.Errorf("received a non-MESSAGE for key '%s': %s", msga[1].(string), msga[2].(string)))
@@ -130,7 +132,7 @@ func (n *NPool) handler(handler Handler) {
 func (n *NPool) NUnDo(command string, keys ...string) error {
 	if strings.ToUpper(command) == "UNSUBSCRIBE" || strings.ToUpper(command) == "PUNSUBSCRIBE" {
 		redisb.Out(n.c, append(append([]string{}, command), keys...)...)
-                return nil
+		return nil
 	}
 	return fmt.Errorf("the given command '%s' is not supported by NUnDo. Please use 'UNSUBSCRIBE' or 'PUNSUBSCRIBE'", command)
 }
