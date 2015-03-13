@@ -119,11 +119,14 @@ func (n *NPool) handler(handler Handler) {
 			}
 			continue
 		}
-		if msgType != "MESSAGE" {
+		if msgType == "MESSAGE" {
+			handler(msga[1].(string), msga[2].(string), nil)
+		} else if msgType == "PMESSAGE" {
+			handler(msga[2].(string), msga[3].(string), nil)
+		} else {
 			handler("", "", fmt.Errorf("received a non-MESSAGE for key '%s': %s", msga[1].(string), msga[2].(string)))
 			break
 		}
-		handler(msga[1].(string), msga[2].(string), nil)
 	}
 	n.Put(n.c)
 }
