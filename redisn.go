@@ -108,7 +108,7 @@ func (n *NPool) NDo(command string, handler Handler, keys ...string) error {
 	if n.c == nil {
 		n.c = n.Get()
 	}
-        NDo(n.c, command, handler, keys...)
+        return NDo(n.c, command, handler, keys...)
 }
 
 // NUnDo function will use a net.Conn from the pool and accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
@@ -116,7 +116,7 @@ func (n *NPool) NUnDo(command string, keys ...string) error {
 	if n.c == nil {
 		n.c = n.Get()
 	}
-        NUnDo(nc, command, keys...)
+        return NUnDo(n.c, command, keys...)
 }
 
 func handlerWrapper(c net.Conn, handler Handler) {
