@@ -52,7 +52,7 @@ import (
 )
 
 // Handler defines the function type required for handling notification messages or failures
-type Handler func(string, string, error)
+type Handler func(string, string, string, error)
 
 // NDo function accepts a net.Conn as well as SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
 func NDo(c net.Conn, command string, handler Handler, keys ...string) error {
@@ -123,7 +123,7 @@ func handlerWrapper(c net.Conn, handler Handler) {
 	for {
 		tmp, err := redisb.Do(c)
 		if err != nil {
-			handler("", "", err)
+			handler("", "", "", err)
 			break
 		}
 		msga := tmp.([]interface{})
@@ -132,7 +132,7 @@ func handlerWrapper(c net.Conn, handler Handler) {
 			fmt.Println("Unsubscribing")
 			remainingSubscriptions := msga[2].(int64)
 			if err != nil {
-				handler("", "", fmt.Errorf("error converting the remaining subscriptions count from string to int: %s", err))
+				handler("", "", "", fmt.Errorf("error converting the remaining subscriptions count from string to int: %s", err))
 			} else {
 				if remainingSubscriptions == 0 {
 					fmt.Println("No subscriptions remaining")
@@ -141,12 +141,13 @@ func handlerWrapper(c net.Conn, handler Handler) {
 			}
 			continue
 		}
+                fullMsg := strings.Join(msga, "\x1F")
 		if msgType == "MESSAGE" {
-			handler(msga[1].(string), msga[2].(string), nil)
+			handler(fullMsg, msga[1].(string), msga[2].(string), nil)
 		} else if msgType == "PMESSAGE" {
-			handler(msga[2].(string), msga[3].(string), nil)
+			handler(fullMsg, msga[2].(string), msga[3].(string), nil)
 		} else {
-			handler("", "", fmt.Errorf("received a non-MESSAGE for key '%s': %s", msga[1].(string), msga[2].(string)))
+			handler(fullMsg, "", "", fmt.Errorf("received a non-MESSAGE for key '%s': %s", msga[1].(string), msga[2].(string)))
 			break
 		}
 	}
