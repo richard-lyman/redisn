@@ -126,6 +126,7 @@ func handlerWrapper(c net.Conn, handler Handler) {
 			handler("", "", "", err)
 			break
 		}
+                s.log(fmt.Sprintf("Raw pubsub response: %#v", tmp))
 		msga := tmp.([]interface{})
 		msgType := strings.ToUpper(msga[0].(string))
 		if strings.HasPrefix(msgType, "UN") || strings.HasPrefix(msgType, "PUN") {
