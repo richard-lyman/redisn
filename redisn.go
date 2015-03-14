@@ -1,9 +1,9 @@
 /*
-Package redisn wraps redisp with notifications.
+Package redisn provides generic methods to handle redis pubsub calls and wraps redisp with the same.
 
-NDo accepts SUBSCRIBE and PSUBSCRIBE commands with an associated list of one or more keys.
+NDo accepts a net.conn as well as SUBSCRIBE and PSUBSCRIBE commands with an associated list of one or more keys.
 
-NUnDo accepts UNSUBSCRIBE and PUNSUBSCRIBE commands with an associated list of one or more keys.
+NUnDo accepts a net.Conn as well as UNSUBSCRIBE and PUNSUBSCRIBE commands with an associated list of one or more keys.
 
 An example of using this package is as follows:
 
@@ -54,6 +54,44 @@ import (
 // Handler defines the function type required for handling notification messages or failures
 type Handler func(string, string, error)
 
+// NDo function accepts a net.Conn as well as SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
+func NDo(c net.Conn, command string, handler Handler, keys ...string) error {
+	if strings.ToUpper(command) == "SUBSCRIBE" || strings.ToUpper(command) == "PSUBSCRIBE" {
+		verifySubscription := func(tmp interface{}, err error) error {
+			if err != nil {
+				return err
+			}
+			s := tmp.([]interface{})
+			if !strings.HasSuffix(strings.ToUpper(s[0].(string)), "SUBSCRIBE") {
+				return fmt.Errorf("failed to subscribe to key: %s", s[1].(string))
+			}
+			return nil
+		}
+		s, err := redisb.Do(c, append(append([]string{}, command), keys...)...)
+		if err := verifySubscription(s, err); err != nil {
+			return err
+		}
+		for _ = range keys[1:] {
+			s, err := redisb.Do(c)
+			if err := verifySubscription(s, err); err != nil {
+				return err
+			}
+		}
+		go handlerWrapper(c, handler)
+		return nil
+	}
+	return fmt.Errorf("the given command '%s' is not supported by NDo. Please use 'SUBSCRIBE' or 'PSUBSCRIBE'", command)
+}
+
+// NUnDo function accepts a net.Conn as well as UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
+func NUnDo(c net.Conn, command string, keys ...string) error {
+	if strings.ToUpper(command) == "UNSUBSCRIBE" || strings.ToUpper(command) == "PUNSUBSCRIBE" {
+		redisb.Out(c, append(append([]string{}, command), keys...)...)
+		return nil
+	}
+	return fmt.Errorf("the given command '%s' is not supported by NUnDo. Please use 'UNSUBSCRIBE' or 'PUNSUBSCRIBE'", command)
+}
+
 // New wraps a redisp.Pool with the NDo and NUnDo functionality
 func New(pool *redisp.Pool) *NPool {
 	return &NPool{pool, nil}
@@ -65,41 +103,25 @@ type NPool struct {
 	c net.Conn
 }
 
-// NDo function accepts SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
+// NDo function will use a net.Conn from the pool and accepts SUBSCRIBE and PSUBSCRIBE commands along with the associated keys and a handler to be called when there are messages or errors
 func (n *NPool) NDo(command string, handler Handler, keys ...string) error {
-	if strings.ToUpper(command) == "SUBSCRIBE" || strings.ToUpper(command) == "PSUBSCRIBE" {
-		if n.c == nil {
-			n.c = n.Get()
-		}
-		verifySubscription := func(tmp interface{}, err error) error {
-			if err != nil {
-				return err
-			}
-			s := tmp.([]interface{})
-			if !strings.HasSuffix(strings.ToUpper(s[0].(string)), "SUBSCRIBE") {
-				return fmt.Errorf("failed to subscribe to key: %s", s[1].(string))
-			}
-			return nil
-		}
-		s, err := redisb.Do(n.c, append(append([]string{}, command), keys...)...)
-		if err := verifySubscription(s, err); err != nil {
-			return err
-		}
-		for _ = range keys[1:] {
-			s, err := redisb.Do(n.c)
-			if err := verifySubscription(s, err); err != nil {
-				return err
-			}
-		}
-		go n.handler(handler)
-		return nil
+	if n.c == nil {
+		n.c = n.Get()
 	}
-	return fmt.Errorf("the given command '%s' is not supported by NDo. Please use 'SUBSCRIBE' or 'PSUBSCRIBE'", command)
+        NDo(n.c, command, handler, keys...)
 }
 
-func (n *NPool) handler(handler Handler) {
+// NUnDo function will use a net.Conn from the pool and accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
+func (n *NPool) NUnDo(command string, keys ...string) error {
+	if n.c == nil {
+		n.c = n.Get()
+	}
+        NUnDo(nc, command, keys...)
+}
+
+func handlerWrapper(c net.Conn, handler Handler) {
 	for {
-		tmp, err := redisb.Do(n.c)
+		tmp, err := redisb.Do(c)
 		if err != nil {
 			handler("", "", err)
 			break
@@ -128,14 +150,9 @@ func (n *NPool) handler(handler Handler) {
 			break
 		}
 	}
-	n.Put(n.c)
 }
 
-// NUnDo function accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
-func (n *NPool) NUnDo(command string, keys ...string) error {
-	if strings.ToUpper(command) == "UNSUBSCRIBE" || strings.ToUpper(command) == "PUNSUBSCRIBE" {
-		redisb.Out(n.c, append(append([]string{}, command), keys...)...)
-		return nil
-	}
-	return fmt.Errorf("the given command '%s' is not supported by NUnDo. Please use 'UNSUBSCRIBE' or 'PUNSUBSCRIBE'", command)
+func (n *NPool) handlerWrapper(handler Handler) {
+        handlerWrapper(n.c, handler)
+	n.Put(n.c)
 }
