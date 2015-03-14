@@ -141,7 +141,11 @@ func handlerWrapper(c net.Conn, handler Handler) {
 			}
 			continue
 		}
-                fullMsg := strings.Join(msga, "\x1F")
+                msgParts := []string{}
+                for _, tmpMsgPart := range msga {
+                        msgParts = append(msgParts, tmpMsgPart.(string))
+                }
+                fullMsg := strings.Join(msgParts, "\x1F")
 		if msgType == "MESSAGE" {
 			handler(fullMsg, msga[1].(string), msga[2].(string), nil)
 		} else if msgType == "PMESSAGE" {
