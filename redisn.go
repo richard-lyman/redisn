@@ -126,7 +126,6 @@ func handlerWrapper(c net.Conn, handler Handler) {
 			handler("", "", "", err)
 			break
 		}
-                s.log(fmt.Sprintf("Raw pubsub response: %#v", tmp))
 		msga := tmp.([]interface{})
 		msgType := strings.ToUpper(msga[0].(string))
 		if strings.HasPrefix(msgType, "UN") || strings.HasPrefix(msgType, "PUN") {
@@ -142,11 +141,12 @@ func handlerWrapper(c net.Conn, handler Handler) {
 			}
 			continue
 		}
-                msgParts := []string{}
-                for _, tmpMsgPart := range msga {
-                        msgParts = append(msgParts, tmpMsgPart.(string))
-                }
-                fullMsg := strings.Join(msgParts, "\x1F")
+                //msgParts := []string{}
+                //for _, tmpMsgPart := range msga {
+                //        msgParts = append(msgParts, tmpMsgPart.(string))
+                //}
+                //fullMsg := strings.Join(msgParts, "\x1F")
+                fullMsg := fmt.Sprintf("Raw pubsub msg: %#v", tmp)
 		if msgType == "MESSAGE" {
 			handler(fullMsg, msga[1].(string), msga[2].(string), nil)
 		} else if msgType == "PMESSAGE" {
