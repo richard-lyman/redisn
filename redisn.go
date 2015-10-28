@@ -108,7 +108,7 @@ func (n *NPool) NDo(command string, handler Handler, keys ...string) error {
 	if n.c == nil {
 		n.c = n.Get()
 	}
-        return NDo(n.c, command, handler, keys...)
+	return NDo(n.c, command, handler, keys...)
 }
 
 // NUnDo function will use a net.Conn from the pool and accepts UNSUBSCRIBE and PUNSUBSCRIBE commands along with the associated keys
@@ -116,7 +116,7 @@ func (n *NPool) NUnDo(command string, keys ...string) error {
 	if n.c == nil {
 		n.c = n.Get()
 	}
-        return NUnDo(n.c, command, keys...)
+	return NUnDo(n.c, command, keys...)
 }
 
 func handlerWrapper(c net.Conn, handler Handler) {
@@ -141,12 +141,12 @@ func handlerWrapper(c net.Conn, handler Handler) {
 			}
 			continue
 		}
-                //msgParts := []string{}
-                //for _, tmpMsgPart := range msga {
-                //        msgParts = append(msgParts, tmpMsgPart.(string))
-                //}
-                //fullMsg := strings.Join(msgParts, "\x1F")
-                fullMsg := fmt.Sprintf("Raw pubsub msg: %#v", tmp)
+		//msgParts := []string{}
+		//for _, tmpMsgPart := range msga {
+		//        msgParts = append(msgParts, tmpMsgPart.(string))
+		//}
+		//fullMsg := strings.Join(msgParts, "\x1F")
+		fullMsg := fmt.Sprintf("Raw pubsub msg: %#v", tmp)
 		if msgType == "MESSAGE" {
 			handler(fullMsg, msga[1].(string), msga[2].(string), nil)
 		} else if msgType == "PMESSAGE" {
@@ -159,6 +159,6 @@ func handlerWrapper(c net.Conn, handler Handler) {
 }
 
 func (n *NPool) handlerWrapper(handler Handler) {
-        handlerWrapper(n.c, handler)
+	handlerWrapper(n.c, handler)
 	n.Put(n.c)
 }
